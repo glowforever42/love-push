@@ -33,6 +33,10 @@ const Signup = () => {
   const userIdRegExp = /^[a-z0-9]{4,16}$/;
   const passwordRegExp = /^(?=.*\d)(?=.*[a-zA-Z])[0-9a-zA-Z]{4,16}$/;
 
+  // 유저 이름, 학교 이름 정규식
+  const userNameRegExp = /^[ㄱ-ㅣ가-힣]{1,17}$/;
+  const schoolNameRegExp = /^[ㄱ-ㅣ가-힣]{2,28}$/;
+  
   // 회원가입 API 호출
   const callSignUpAPI = () => {
     const signupInfo = {

@@ -1,6 +1,7 @@
 package com.cupid.joalarm.account.entity;
 
-import com.cupid.joalarm.base.entity.BaseTimeEntity;
+import com.cupid.joalarm.feed.Feed;
+import com.cupid.joalarm.school.School;
 import lombok.*;
 
 import javax.persistence.*;
@@ -12,8 +13,8 @@ import javax.persistence.*;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@ToString
-public class Account extends BaseTimeEntity {
+@ToString(exclude = "schools")
+public class Account {
     @Id
     @Column(name = "account_seq")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,15 +30,19 @@ public class Account extends BaseTimeEntity {
     @Column(name = "emoji")
     private String emoji;
 
-    private int receiveHeartCnt;
+    @Column(name = "report_cnt")
+    private int reportedCnt;
 
-    private int touchHeartCnt;
+    @Column(name = "last_name")
+    private String lastName;
 
-    public void receiveHeartCntPlus() {
-        this.receiveHeartCnt++;
-    }
+    @Column(name = "first_name")
+    private String firstName;
 
-    public void touchHeartCntPlus() {
-        this.touchHeartCnt++;
-    }
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "school_id")
+    private School school;
+
+
 }
+

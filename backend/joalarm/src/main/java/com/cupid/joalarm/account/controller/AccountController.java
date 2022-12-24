@@ -3,6 +3,7 @@ package com.cupid.joalarm.account.controller;
 import com.cupid.joalarm.account.dto.*;
 import com.cupid.joalarm.account.jwt.TokenProvider;
 import com.cupid.joalarm.account.service.AccountService;
+import com.cupid.joalarm.school.SchoolService;
 import com.cupid.joalarm.util.MessageResponse;
 import com.cupid.joalarm.util.SecurityUtil;
 import io.swagger.annotations.Api;
@@ -30,6 +31,7 @@ public class AccountController {
     private final TokenProvider tokenProvider;
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final SecurityUtil securityUtil;
+    private final SchoolService schoolService;
 
     @PostMapping
     public ResponseEntity<AccountDto> signup(@Valid @RequestBody AccountDto accountDto) {
@@ -49,7 +51,10 @@ public class AccountController {
         String jwt = tokenProvider.createToken(authentication);
         String emojiUrl = accountService.findBySeq(accountSeq).getEmoji();
 
-        return new ResponseEntity<>(new TokenDto(accountSeq,jwt, emojiUrl), HttpStatus.OK);
+        Long schoolSeqBySeq = accountService.findSchoolSeqBySeq(accountSeq);
+        String schoolNameBySeq = accountService.findSchoolNameBySeq(accountSeq);
+
+        return new ResponseEntity<>(new TokenDto(accountSeq,jwt, emojiUrl, schoolSeqBySeq, schoolNameBySeq), HttpStatus.OK);
     }
 
     @GetMapping("/info")
@@ -88,16 +93,16 @@ public class AccountController {
         return ResponseEntity.ok(accountDto.getEmoji());
     }
 
-//    @PostMapping("report")
-//    @ApiOperation(value = "대상 유저 신고", notes = "로그인시 사용 가능 \n 신고할 계정 seq 정보를 전달")
-//    public ResponseEntity<String> reportAccount(@RequestHeader String token, @ApiParam(value = "신고할 user seq", required = true) @RequestBody ReportDto reportDto) {
-//        Optional<String> seqId = securityUtil.getCurrentUsername();
-//        if (seqId.isEmpty()) return ResponseEntity.noContent().build();
-//
-//        Boolean success = accountService.reportBYSeq(reportDto.getReported());
-//        if (success) return ResponseEntity.ok("Success report");
-//        else return ResponseEntity.noContent().build();
-//    }
+    @PostMapping("report")
+    @ApiOperation(value = "대상 유저 신고", notes = "로그인시 사용 가능 \n 신고할 계정 seq 정보를 전달")
+    public ResponseEntity<String> reportAccount(@RequestHeader String token, @ApiParam(value = "신고할 user seq", required = true) @RequestBody ReportDto reportDto) {
+        Optional<String> seqId = securityUtil.getCurrentUsername();
+        if (seqId.isEmpty()) return ResponseEntity.noContent().build();
+
+        Boolean success = accountService.reportBYSeq(reportDto.getReported());
+        if (success) return ResponseEntity.ok("Success report");
+        else return ResponseEntity.noContent().build();
+    }
 
     @GetMapping
     @ApiOperation(value = "아이디 중복 검사", notes = "아이디 중복 검사, 아이디 사용가능하다면 200, 중복된 아이디가 잇을경우 409 상태코드를 보낸다.")
@@ -108,4 +113,6 @@ public class AccountController {
         else return new ResponseEntity<>(new MessageResponse("사용 가능한 아이디입니다."),resHeaders,HttpStatus.OK);
 
     }
+
+
 }

@@ -1,30 +1,34 @@
 package com.cupid.joalarm.heart.controller;
 
-import com.cupid.joalarm.heart.dto.SendHeartDTO;
-import com.cupid.joalarm.heart.entity.Heart;
+import com.cupid.joalarm.heart.dto.HeartDto;
 import com.cupid.joalarm.heart.service.HeartService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-
+@Api("heart 관련 기능")
 @RequiredArgsConstructor
-@Controller
+@RestController
 public class HeartController {
+
     private final HeartService heartService;
 
-    @MessageMapping("/heart")
-    public void sendHeart(SendHeartDTO DTO) {
-        heartService.sendHeart(DTO.getSendUser(), DTO.getSessionAccountHashMap());
-    }
+    @ApiOperation(value = "좋아하는 사람 지정", notes = "좋아하는 사람의 성, 이름, 학교를 등록 및 메시징을 날립니다.")
+    @PostMapping("/heart")
+    public ResponseEntity<HeartDto> sendHeart(@RequestBody HeartDto heartDto) {
+        Optional<HeartDto> heartDtoOptional = heartService.setHeart(heartDto);
 
-    @GetMapping("/heart/sendheartlist")
-    public ResponseEntity<List<Long>> sendHeartList(long seq) {
-        return new ResponseEntity<>(heartService.SendHeartList(seq), HttpStatus.OK);
+        if (heartDtoOptional.isEmpty()) {
+            return new ResponseEntity<>(new HeartDto(), HttpStatus.BAD_REQUEST);
+        }
+
+        return new ResponseEntity<>(heartDto, HttpStatus.OK);
     }
 
 }

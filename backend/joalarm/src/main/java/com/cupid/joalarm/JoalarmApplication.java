@@ -9,9 +9,9 @@ import javax.annotation.PostConstruct;
 import java.util.TimeZone;
 
 // http://localhost:8888/api/swagger-ui/index.html
-@EnableJpaAuditing
-@EnableScheduling
 @SpringBootApplication
+@EnableScheduling
+@EnableJpaAuditing
 public class JoalarmApplication {
 	@PostConstruct
 	void started() {

@@ -21,10 +21,12 @@ public class ChildCommentDto {
     @ApiParam(value = "대댓글 내용")
     private String content;
 
-    @ApiParam(value = "대댓글 id")
+    @ApiParam(value = "댓글 id")
     private Long commentId;
 
     @ApiParam(value = "유저 id")
     private Long userId;
 
+    @ApiParam(value = "대댓글 좋아요 수")
+    private Long likeCnt;
 }

@@ -4,13 +4,14 @@ import com.cupid.joalarm.feed.childcomment.ChildComment;
 import com.cupid.joalarm.feed.childcomment.ChildCommentDto;
 import com.cupid.joalarm.feed.childcomment.ChildCommentListDto;
 import com.cupid.joalarm.feed.childcomment.ChildCommentRepository;
-import com.cupid.joalarm.feed.comment.AllCommentsDto;
+
+import com.cupid.joalarm.feed.comment.*;
+import com.cupid.joalarm.school.School;
+import com.cupid.joalarm.school.SchoolRepository;
+
+
 import com.cupid.joalarm.util.SecurityUtil;
 import com.cupid.joalarm.feed.media.GlobalConfig;
-import com.cupid.joalarm.feed.comment.Comment;
-import com.cupid.joalarm.feed.comment.CommentDto;
-import com.cupid.joalarm.feed.comment.CommentListDto;
-import com.cupid.joalarm.feed.comment.CommentRepository;
 import com.cupid.joalarm.feed.like.Like;
 import com.cupid.joalarm.feed.like.LikeRepository;
 import com.cupid.joalarm.feed.tag.Tag;
@@ -37,9 +38,10 @@ public class FeedService {
     public LikeRepository likeRepository;
     public SecurityUtil securityUtil;
     public ChildCommentRepository childCommentRepository;
+    public SchoolRepository schoolRepository;
 
     @Autowired
-    public FeedService(FeedRepository feedRepository, AccountRepository accountRepository, CommentRepository commentRepository, GlobalConfig config, TagRepository tagRepository, LikeRepository likeRepository, SecurityUtil securityUtil, ChildCommentRepository childCommentRepository) {
+    public FeedService(FeedRepository feedRepository, AccountRepository accountRepository, CommentRepository commentRepository, GlobalConfig config, TagRepository tagRepository, LikeRepository likeRepository, SecurityUtil securityUtil, ChildCommentRepository childCommentRepository, SchoolRepository schoolRepository) {
         this.feedRepository = feedRepository;
         this.accountRepository = accountRepository;
         this.commentRepository = commentRepository;
@@ -48,6 +50,7 @@ public class FeedService {
         this.likeRepository = likeRepository;
         this.securityUtil = securityUtil;
         this.childCommentRepository = childCommentRepository;
+        this.schoolRepository = schoolRepository;
     }
 
     @Transactional
@@ -109,13 +112,14 @@ public class FeedService {
 //                }
 //            }
 //        }
-        
+
         // Create Feed
         Feed feed = Feed.builder()
                 .content(feedDto.getContent())
                 .likeCnt(0L)
 //                .mediaUrl(resourcePathname)
                 .account(account)
+                .school(schoolRepository.findByName(feedDto.getSchool()))
 //                .tags(resTags)
                 .build();
 
@@ -142,9 +146,9 @@ public class FeedService {
             feedDto.setMediaUrl(feed.getMediaUrl());
             feedDto.setLikeCnt(feed.getLikeCnt());
             feedDto.setUsername(feed.getAccount().getId());
-            feedDto.setCreatedAt(feed.getCreatedDate());
-            feedDto.setUpdatedAt(feed.getModifiedDate());
-            feedDto.setSchool(feed.getSchool());
+            feedDto.setCreatedAt(feed.getCreatedAt());
+            feedDto.setUpdatedAt(feed.getUpdatedAt());
+            feedDto.setSchool(feed.getSchool().getName());
             feedDto.setUserId(feed.getAccount().getAccountSeq());
 
             Long commentsCount = commentRepository.findByFeed(feed).stream().count();
@@ -175,7 +179,64 @@ public class FeedService {
         return result;
     }
 
+    public List<FeedDto> getSchoolFeeds(String school, String user) {
 
+        // Get User
+        Long seq = Long.parseLong(user);
+        Optional<Account> accountOpt = accountRepository.findById(seq);
+        Account account = accountOpt.get();
+
+        List<FeedDto> result = new ArrayList<>();
+
+        System.out.println(schoolRepository.findByName(school));
+        School desireSchool = schoolRepository.findByName(school);
+
+        for (Feed feed : feedRepository.findAll()) {
+
+            if (!desireSchool.getSchoolId().equals(feed.getSchool().getSchoolId())) {
+                continue;
+            }
+            FeedDto feedDto = new FeedDto();
+
+            feedDto.setFeedId(feed.getFeedId());
+            feedDto.setContent(feed.getContent());
+            feedDto.setMediaUrl(feed.getMediaUrl());
+            feedDto.setLikeCnt(feed.getLikeCnt());
+            feedDto.setUsername(feed.getAccount().getId());
+            feedDto.setCreatedAt(feed.getCreatedAt());
+            feedDto.setUpdatedAt(feed.getUpdatedAt());
+            feedDto.setSchool(feed.getSchool().getName());
+            feedDto.setUserId(feed.getAccount().getAccountSeq());
+
+            Long commentsCount = commentRepository.findByFeed(feed).stream().count();
+            feedDto.setCommentsCount(commentsCount);
+
+            System.out.println("feedDto = " + feedDto);
+
+            // Check like_status
+            Like like_flag = likeRepository.findByAccountAndFeed(account, feed);
+            if (like_flag != null) {
+                feedDto.setLikeStatus(true);
+            } else {
+                feedDto.setLikeStatus(false);
+            }
+
+
+            result.add(feedDto);
+        }
+
+        // Sorting By Created time
+        result.sort(new Comparator<FeedDto>() {
+            @Override
+            public int compare(FeedDto o1, FeedDto o2) {
+                return o2.getFeedId().intValue() - o1.getFeedId().intValue();
+            }
+        });
+
+        return result;
+    }
+
+    @Transactional
     public FeedListDto getFeed(Long feedId, String user) {
 
         // Get User
@@ -197,26 +258,15 @@ public class FeedService {
         result.setMediaUrl(feed.getMediaUrl());
         result.setLikeCnt(feed.getLikeCnt());
         result.setUsername(feed.getAccount().getId());
-        result.setCreatedAt(feed.getCreatedDate());
-        result.setUpdatedAt(feed.getModifiedDate());
+        result.setCreatedAt(feed.getCreatedAt());
+        result.setUpdatedAt(feed.getUpdatedAt());
+        result.setSchool(feed.getSchool().getName());
         result.setUserId(feed.getAccount().getAccountSeq());
 
-        // 전체 댓글 및 대댓글 추가, N + 1 문제가 발생하므로 추후 수정할 것
-
-        List<AllCommentsDto> allComments = new ArrayList<>() {{
-            List<CommentListDto> comments = getComments(feedId);
-
-            for (CommentListDto comment : comments) {
-                AllCommentsDto allCommentsDto = ((AllCommentsDto) comment);
-                allCommentsDto.setChildComments(getChildComments(comment.getCommentId()));
-                add(allCommentsDto);
-            }
-        }};
-
-        result.setAllComments(allComments);
-
-        // 전체 댓글 및 대댓글 추가 코드 종료
-
+        int size = feed.getComments().size();
+        long longSize = size;
+        result.setCommentCnt(longSize);
+        
         // Check like_status
         Like like_flag = likeRepository.findByAccountAndFeed(account, feed);
         if (like_flag != null) {
@@ -225,12 +275,39 @@ public class FeedService {
             result.setLikeStatus(false);
         }
 
-//        List<String> tempTags = new ArrayList<>();
-//        for (Tag tag : feed.getTags()) {
-//            tempTags.add(tag.getName());
-//        };
-//        result.setTags(tempTags);
+        // Get All comments
+        List<AllCommentDto> tempAllCommentDtos = new ArrayList<>();
 
+        for (Comment comment : feed.getComments()) {
+
+            AllCommentDto allCommentDto = new AllCommentDto();
+
+            allCommentDto.setCommentId(comment.getCommentId());
+            allCommentDto.setCreatedAt(comment.getCreatedAt());
+            allCommentDto.setUserId(comment.getAccount().getAccountSeq());
+            allCommentDto.setContent(comment.getContent());
+            allCommentDto.setLikeCnt(comment.getLikeCnt());
+
+            tempAllCommentDtos.add(allCommentDto);
+
+            List<ChildCommentDto> tempChildCommentDtos = new ArrayList<>();
+            for (ChildComment childComment : comment.getChildComments()) {
+
+                ChildCommentDto childCommentDto = new ChildCommentDto();
+
+                childCommentDto.setChildId(childComment.getChildId());
+                childCommentDto.setCreatedAt(childComment.getCreatedAt());
+                childCommentDto.setUserId(childComment.getAccount().getAccountSeq());
+                childCommentDto.setContent(childComment.getContent());
+                childCommentDto.setCommentId(childComment.getComment().getCommentId());
+                childCommentDto.setLikeCnt(childComment.getLikeCnt());
+
+                tempChildCommentDtos.add(childCommentDto);
+            }
+            allCommentDto.setChildCommentDto(tempChildCommentDtos);
+        }
+
+        result.setAllComments(tempAllCommentDtos);
         return result;
     }
 
@@ -250,6 +327,7 @@ public class FeedService {
             feedDto.setMediaUrl(feed.getMediaUrl());
             feedDto.setLikeCnt(feed.getLikeCnt());
             feedDto.setUsername(feed.getAccount().getId());
+            feedDto.setSchool(feed.getSchool().getName());
 
             List<String> tempTags = new ArrayList<>();
 //            for (Tag tag : feed.getTags()) {
@@ -297,6 +375,7 @@ public class FeedService {
             feedListDto.setMediaUrl(feed.getMediaUrl());
             feedListDto.setLikeCnt(feed.getLikeCnt());
             feedListDto.setContent(feed.getContent());
+            feedListDto.setSchool(feed.getSchool().getName());
 
             List<String> tempTags = new ArrayList<>();
             for (Tag tag : feed.getTags()) {
@@ -304,8 +383,8 @@ public class FeedService {
             };
             feedListDto.setTags(tempTags);
 
-            feedListDto.setCreatedAt(feed.getCreatedDate());
-            feedListDto.setUpdatedAt(feed.getModifiedDate());
+            feedListDto.setCreatedAt(feed.getCreatedAt());
+            feedListDto.setUpdatedAt(feed.getUpdatedAt());
 
             // Check like_status
             Like like_flag = likeRepository.findByAccountAndFeed(account, feed);
@@ -354,8 +433,8 @@ public class FeedService {
             };
             feedProfileDto.setTags(tempTags);
 
-            feedProfileDto.setCreatedAt(feed.getCreatedDate());
-            feedProfileDto.setUpdatedAt(feed.getModifiedDate());
+            feedProfileDto.setCreatedAt(feed.getCreatedAt());
+            feedProfileDto.setUpdatedAt(feed.getUpdatedAt());
 
             // Check like_status
             Like like_flag = likeRepository.findByAccountAndFeed(account, feed);
@@ -391,8 +470,8 @@ public class FeedService {
 
         feedDto.setFeedId(feed.getFeedId());
         feedDto.setContent(feed.getContent());
-        feedDto.setCreatedAt(feed.getCreatedDate());
-        feedDto.setUpdatedAt(feed.getModifiedDate());
+        feedDto.setCreatedAt(feed.getCreatedAt());
+        feedDto.setUpdatedAt(feed.getUpdatedAt());
         feedDto.setMediaUrl(feed.getMediaUrl());
         feedDto.setUsername(feed.getAccount().getId());
 
@@ -479,7 +558,7 @@ public class FeedService {
             commentListDto.setCommentId(comment.getCommentId());
             commentListDto.setUserId(comment.getAccount().getAccountSeq());
             commentListDto.setContent(comment.getContent());
-            commentListDto.setCreatedAt(comment.getCreatedDate());
+            commentListDto.setCreatedAt(comment.getCreatedAt());
 
             result.add(commentListDto);
         }
@@ -505,6 +584,7 @@ public class FeedService {
                 .content(commentDto.getContent())
                 .feed(feed.get())
                 .account(account)
+                .likeCnt(0L)
                 .build();
 
         commentRepository.save(comment);
@@ -537,7 +617,7 @@ public class FeedService {
             childCommentListDto.setChildId(childComment.getChildId());
             childCommentListDto.setUserId(childComment.getAccount().getAccountSeq());
             childCommentListDto.setContent(childComment.getContent());
-            childCommentListDto.setCreatedAt(childComment.getCreatedDate());
+            childCommentListDto.setCreatedAt(childComment.getCreatedAt());
             childCommentListDto.setCommentId(childComment.getComment().getCommentId());
 
             result.add(childCommentListDto);
@@ -557,7 +637,7 @@ public class FeedService {
         childCommentDto.setChildId(childComment.getChildId());
         childCommentDto.setUserId(childComment.getAccount().getAccountSeq());
         childCommentDto.setContent(childComment.getContent());
-        childCommentDto.setCreatedAt(childComment.getCreatedDate());
+        childCommentDto.setCreatedAt(childComment.getCreatedAt());
         childCommentDto.setCommentId(childComment.getComment().getCommentId());
 
         return childCommentDto;
@@ -579,6 +659,7 @@ public class FeedService {
         // Build & Save Comment
         ChildComment childComment = ChildComment.builder()
                 .content(childCommentDto.getContent())
+                .likeCnt(0L)
                 .comment(comment.get())
                 .account(account)
                 .build();

@@ -2,56 +2,44 @@ package com.cupid.joalarm.heart.service;
 
 import com.cupid.joalarm.account.entity.Account;
 import com.cupid.joalarm.account.repository.AccountRepository;
-import com.cupid.joalarm.heart.dto.HeartTypeDTO;
-import com.cupid.joalarm.heart.entity.AccountsEmbedded;
-import com.cupid.joalarm.heart.entity.Heart;
+import com.cupid.joalarm.heart.dto.HeartDto;
+import com.cupid.joalarm.heart.entity.HeartEntity;
 import com.cupid.joalarm.heart.repository.HeartRepository;
+import com.cupid.joalarm.school.School;
+import com.cupid.joalarm.school.SchoolRepository;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
 @Service
 @RequiredArgsConstructor
 public class HeartService {
+
     private final HeartRepository heartRepository;
     private final AccountRepository accountRepository;
+    private final SchoolRepository schoolRepository;
     private final SimpMessageSendingOperations messageTemplate;
 
     @Transactional
-    public void sendHeart(long sendAccountSeq, HashMap<String, Long> sessionAccountHashMap) {
-        Optional<Account> sendAccount = accountRepository.findAccountByAccountSeq(sendAccountSeq);
-        sendAccount.ifPresent(Account::touchHeartCntPlus);
+    public Optional<HeartDto> setHeart(HeartDto heartDto) {
+        Optional<Account> accountOpt = accountRepository.findAccountByAccountSeq(heartDto.getAccountSeq());
+        Optional<HeartEntity> heartOpt = heartRepository.findById(heartDto.getAccountSeq());
+        Optional<School> schoolOpt = schoolRepository.findById(heartDto.getSchoolSeq());
 
-        for (Map.Entry<String, Long> receiveAccountEntry : sessionAccountHashMap.entrySet()) {
-            Optional<Account> receiveAccount = accountRepository.findAccountByAccountSeq(receiveAccountEntry.getValue());
-            receiveAccount.ifPresent(Account::receiveHeartCntPlus);
-
-            if (sendAccount.isPresent() && receiveAccount.isPresent()) {
-                Heart heart = Heart.builder()
-                        .AccountsWhoExchangedHearts(
-                                new AccountsEmbedded(
-                                        sendAccount.get(), receiveAccount.get()
-                                )
-                        ).build();
-
-                heartRepository.save(heart);
-            }
-
-            receiveHeart(sendAccountSeq, receiveAccountEntry.getKey());
+        if (accountOpt.isEmpty() || schoolOpt.isEmpty()) {
+            return Optional.empty();
         }
-    }
 
-    public void receiveHeart(long sendAccountSeq, String session) {
-        messageTemplate.convertAndSend("/sub/heart/" + session, new HeartTypeDTO("HEART", sendAccountSeq));
-    }
+        if (heartOpt.isEmpty()) {
+            heartRepository.save(HeartEntity.convert(accountOpt.get(), heartDto, schoolOpt.get()));
+        } else {
+            HeartEntity heartEntity = heartOpt.get();
+            heartEntity.changeLover(heartDto.getFirstName(), heartDto.getLastName(), schoolOpt.get());
+        }
 
-    public List<Long> SendHeartList(long seq) {
-        return heartRepository.findReceiveMyHeartAccountsSeq(seq);
+        messageTemplate.convertAndSend("/sub/heart", heartDto);
+        return Optional.of(heartDto);
     }
 }

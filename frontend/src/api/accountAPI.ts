@@ -6,9 +6,12 @@
 import { axiosInstance } from './axiosInstance';
 
 interface ISignupReqData {
-  emoji: string;
-  id: string;
-  password: string;
+  emoji: string,
+  firstName: string,
+  id: string,
+  lastName: string,
+  password: string,
+  school: string,
 }
 
 interface ISignupResponse {

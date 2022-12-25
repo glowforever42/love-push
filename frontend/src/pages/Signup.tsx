@@ -19,10 +19,13 @@ const Signup = () => {
   const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
+  const [userFirstName, setuserFirstName] = useState('');
+  const [userLastName, setuserLastName] = useState('');
+  const [userSchool, setuserSchool] = useState('');
   const [errMsg, setErrMsg] = useState('');
 
   useEffect(() => {
-    if (pageId === ('4' || '9')) {
+    if (pageId === ('8' || '9')) {
       setTimeout(() => {
         navigate('/');
       }, 1200);
@@ -44,6 +47,9 @@ const Signup = () => {
         'https://cupid-joalarm.s3.ap-northeast-2.amazonaws.com/Face blowing a kiss.svg',
       id: userId,
       password: password,
+      firstName: userFirstName,
+      lastName: userLastName,
+      school: userSchool,
     };
     signUpAPI(signupInfo)
       .then((res) => {
@@ -65,6 +71,15 @@ const Signup = () => {
         break;
       case '3':
         setPasswordConfirm(v);
+        break;
+      case '4':
+        setuserLastName(v);
+        break;
+      case '5':
+        setuserFirstName(v);
+        break;
+      case '6':
+        setuserSchool(v);
         break;
     }
   };
@@ -102,11 +117,38 @@ const Signup = () => {
       case '3':
         setPasswordConfirm(v);
         if (password === passwordConfirm) {
-          callSignUpAPI();
+          navigate('/signup/4');
         } else {
           setErrMsg('비밀번호가 일치하지 않습니다.');
         }
         break;
+      case '4':
+        setuserLastName(v);
+        if (userNameRegExp.test(v)) {
+          navigate('/signup/5');
+          setErrMsg('');
+        } else {
+          setErrMsg('한글로 입력해주세요.');
+        }
+        break;
+      case '5':
+        setuserFirstName(v);
+        if (userNameRegExp.test(v)) {
+          navigate('/signup/6');
+          setErrMsg('');
+        } else {
+          setErrMsg('한글로 입력해주세요.');
+        }
+        break;
+      case '6':
+        setuserSchool(v);
+        if (schoolNameRegExp.test(v)) {
+          callSignUpAPI();
+        } else {
+          setErrMsg('한글로 입력해주세요.');
+        }
+        break;
+    
     }
   };
 
@@ -144,6 +186,33 @@ const Signup = () => {
           />
         )}
         {pageId === '4' && (
+          <SignupForm
+            label="성을 입력해주세요."
+            type="text"
+            value={userFirstName}
+            onInputChange={inputChangeHandler}
+            onFormSubmit={formSubmitHandler}
+          />
+        )}
+        {pageId === '5' && (
+          <SignupForm
+            label="이름을 입력해주세요."
+            type="text"
+            value={userLastName}
+            onInputChange={inputChangeHandler}
+            onFormSubmit={formSubmitHandler}
+          />
+        )}
+        {pageId === '6' && (
+          <SignupForm
+            label="학교를 입력해주세요."
+            type="text"
+            value={userSchool}
+            onInputChange={inputChangeHandler}
+            onFormSubmit={formSubmitHandler}
+          />
+        )}
+        {pageId === '8' && (
           <SignupResult>회원가입이 완료되었습니다.</SignupResult>
         )}
         {pageId === '9' && (

@@ -5,6 +5,7 @@
  */
 
 import { useCallback, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ReactGA from 'react-ga';
 import styled from 'styled-components';
 
@@ -21,6 +22,7 @@ import { heartSendSetAPI } from '../api/heartAPI';
 
 const MainPage = () => {
   useDocumentTitle('좋아하면 누르는');
+  const navigate = useNavigate();
 
   const [pushHeart, setPushHeart] = useState(false);
   const [isNameInputOpen, setIsNameInputOpen] = useState(false);
@@ -76,6 +78,31 @@ const MainPage = () => {
     toggleModal(false);
   };
 
+  const homeBtnClickHandler = () => {
+    ReactGA.event({
+      category: '홈 버튼 클릭',
+      action: '홈페이지 진입',
+    });
+    navigate('/');
+  };
+
+  const rankingBtnClickHandler = () => {
+    ReactGA.event({
+      category: '랭킹 버튼 클릭',
+      action: '랭킹 페이지 진입',
+    });
+    navigate('/ranking');
+  };
+
+  const boardBtnClickHandler = () => {
+    ReactGA.event({
+      category: '게시판 버튼 클릭',
+      action: '게시판 페이지 진입',
+    });
+    navigate('/board');
+  };
+
+
   return (
     <>
       {isNameInputOpen && (
@@ -129,9 +156,9 @@ const MainPage = () => {
         </div>
         <div className="nav_btn">
           <ButtonGroup variant="contained" color="secondary" aria-label="outlined primary button group">
-            <Button>홈</Button>
-            <Button>랭킹</Button>
-            <Button>게시판</Button>
+            <Button onClick={ homeBtnClickHandler }>홈</Button>
+            <Button onClick={ rankingBtnClickHandler }>랭킹</Button>
+            <Button onClick={ boardBtnClickHandler }>게시판</Button>
           </ButtonGroup>
         </div>
         <MainFooter />

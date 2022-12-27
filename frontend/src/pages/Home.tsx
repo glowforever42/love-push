@@ -131,7 +131,7 @@ const MainPage = () => {
           <ButtonGroup variant="contained" color="secondary" aria-label="outlined primary button group">
             <Button>홈</Button>
             <Button>랭킹</Button>
-            <Button>채팅</Button>
+            <Button>게시판</Button>
           </ButtonGroup>
         </div>
         <MainFooter />

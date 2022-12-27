@@ -12,6 +12,7 @@ import MainNav from '../components/Templetes/MainNav';
 import MainFooter from '../components/Templetes/MainFooter';
 import AfterBackGround from '../components/Atoms/AfterBackground';
 import HeartBtn from '../components/Molecules/HeartBtn';
+import { ButtonGroup, Button } from '@mui/material';
 
 import useDocumentTitle from '../hooks/useDocumentTitle';
 
@@ -125,6 +126,13 @@ const MainPage = () => {
         </div>
         <div className="heart_box">
           <HeartBtn show={pushHeart} onClickHeart={heartClickHandler} />
+        </div>
+        <div className="nav_btn">
+          <ButtonGroup variant="contained" color="secondary" aria-label="outlined primary button group">
+            <Button>홈</Button>
+            <Button>랭킹</Button>
+            <Button>채팅</Button>
+          </ButtonGroup>
         </div>
         <MainFooter />
       </div>

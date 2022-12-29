@@ -19,9 +19,9 @@ const Signup = () => {
   const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
-  const [userFirstName, setuserFirstName] = useState('');
-  const [userLastName, setuserLastName] = useState('');
-  const [userSchool, setuserSchool] = useState('');
+  const [userFirstName, setUserFirstName] = useState('');
+  const [userLastName, setUserLastName] = useState('');
+  const [userSchool, setUserSchool] = useState('');
   const [errMsg, setErrMsg] = useState('');
 
   useEffect(() => {
@@ -53,7 +53,7 @@ const Signup = () => {
     };
     signUpAPI(signupInfo)
       .then((res) => {
-        navigate('/signup/4');
+        navigate('/signup/8');
       })
       .catch((err) => {
         console.log(err);
@@ -64,37 +64,63 @@ const Signup = () => {
   const inputChangeHandler = (v: string) => {
     switch (pageId) {
       case '1':
-        setUserId(v);
+        setUserLastName(v);
         break;
       case '2':
-        setPassword(v);
+        setUserFirstName(v);
         break;
       case '3':
-        setPasswordConfirm(v);
+        setUserSchool(v);
         break;
       case '4':
-        setuserLastName(v);
+        setUserId(v);
         break;
       case '5':
-        setuserFirstName(v);
+        setPassword(v);
         break;
       case '6':
-        setuserSchool(v);
+        setPasswordConfirm(v);
         break;
     }
   };
 
   const formSubmitHandler = async (v: string) => {
     switch (pageId) {
-      // 아이디 입력 페이지
       case '1':
+        setUserLastName(v);
+        if (userNameRegExp.test(v)) {
+          navigate('/signup/2');
+          setErrMsg('');
+        } else {
+          setErrMsg('한글로 입력해주세요.');
+        }
+        break;
+      case '2':
+        setUserFirstName(v);
+        if (userNameRegExp.test(v)) {
+          navigate('/signup/3');
+          setErrMsg('');
+        } else {
+          setErrMsg('한글로 입력해주세요.');
+        }
+        break;
+      case '3':
+        setUserSchool(v);
+        if (schoolNameRegExp.test(v)) {
+          navigate('/signup/4');
+        } else {
+          setErrMsg('한글로 입력해주세요.');
+        }
+        break
+      // 아이디 입력 페이지
+      case '4':
         setUserId(v);
         if (!userIdRegExp.test(v)) {
           setErrMsg('4자 이상, 16자 이하의 영문 혹은 숫자로 입력해주세요.');
         } else {
           await idVaidateAPI(v)
             .then((res) => {
-              navigate('/signup/2');
+              navigate('/signup/5');
               setErrMsg('');
             })
             .catch((err) => {
@@ -104,51 +130,24 @@ const Signup = () => {
         }
         break;
       // 비밀번호 입력 페이지
-      case '2':
+      case '5':
         setPassword(v);
         if (passwordRegExp.test(v)) {
-          navigate('/signup/3');
+          navigate('/signup/6');
           setErrMsg('');
         } else {
           setErrMsg('4자 이상, 16자 이하의 영문, 숫자 조합으로 입력해주세요.');
         }
         break;
       // 비밀번호 확인 페이지
-      case '3':
+      case '6':
         setPasswordConfirm(v);
         if (password === passwordConfirm) {
-          navigate('/signup/4');
+          callSignUpAPI();
         } else {
           setErrMsg('비밀번호가 일치하지 않습니다.');
         }
         break;
-      case '4':
-        setuserLastName(v);
-        if (userNameRegExp.test(v)) {
-          navigate('/signup/5');
-          setErrMsg('');
-        } else {
-          setErrMsg('한글로 입력해주세요.');
-        }
-        break;
-      case '5':
-        setuserFirstName(v);
-        if (userNameRegExp.test(v)) {
-          navigate('/signup/6');
-          setErrMsg('');
-        } else {
-          setErrMsg('한글로 입력해주세요.');
-        }
-        break;
-      case '6':
-        setuserSchool(v);
-        if (schoolNameRegExp.test(v)) {
-          callSignUpAPI();
-        } else {
-          setErrMsg('한글로 입력해주세요.');
-        }
-        break;
-    
     }
   };
 
@@ -156,7 +155,34 @@ const Signup = () => {
     <>
       <BackBtnNav pageTitle="회원가입" />
       <Wrapper>
-        {pageId === '1' && (
+      {pageId === '1' && (
+          <SignupForm
+            label="성을 입력해주세요."
+            type="text"
+            value={userFirstName}
+            onInputChange={inputChangeHandler}
+            onFormSubmit={formSubmitHandler}
+          />
+        )}
+        {pageId === '2' && (
+          <SignupForm
+            label="이름을 입력해주세요."
+            type="text"
+            value={userLastName}
+            onInputChange={inputChangeHandler}
+            onFormSubmit={formSubmitHandler}
+          />
+        )}
+        {pageId === '3' && (
+          <SignupForm
+            label="학교를 입력해주세요."
+            type="text"
+            value={userSchool}
+            onInputChange={inputChangeHandler}
+            onFormSubmit={formSubmitHandler}
+          />
+        )}
+        {pageId === '4' && (
           <>
             <SignupForm
               label="아이디를 입력해주세요."
@@ -167,7 +193,7 @@ const Signup = () => {
             />
           </>
         )}
-        {pageId === '2' && (
+        {pageId === '5' && (
           <SignupForm
             label="비밀번호를 입력해주세요."
             type="password"
@@ -176,38 +202,11 @@ const Signup = () => {
             onFormSubmit={formSubmitHandler}
           />
         )}
-        {pageId === '3' && (
+        {pageId === '6' && (
           <SignupForm
             label="비밀번호를 한 번 더 입력해주세요."
             type="password"
             value={passwordConfirm}
-            onInputChange={inputChangeHandler}
-            onFormSubmit={formSubmitHandler}
-          />
-        )}
-        {pageId === '4' && (
-          <SignupForm
-            label="성을 입력해주세요."
-            type="text"
-            value={userFirstName}
-            onInputChange={inputChangeHandler}
-            onFormSubmit={formSubmitHandler}
-          />
-        )}
-        {pageId === '5' && (
-          <SignupForm
-            label="이름을 입력해주세요."
-            type="text"
-            value={userLastName}
-            onInputChange={inputChangeHandler}
-            onFormSubmit={formSubmitHandler}
-          />
-        )}
-        {pageId === '6' && (
-          <SignupForm
-            label="학교를 입력해주세요."
-            type="text"
-            value={userSchool}
             onInputChange={inputChangeHandler}
             onFormSubmit={formSubmitHandler}
           />

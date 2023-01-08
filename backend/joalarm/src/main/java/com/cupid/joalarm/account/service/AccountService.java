@@ -3,8 +3,8 @@ package com.cupid.joalarm.account.service;
 import com.cupid.joalarm.account.dto.AccountDto;
 import com.cupid.joalarm.account.entity.Account;
 import com.cupid.joalarm.account.repository.AccountRepository;
-import com.cupid.joalarm.school.School;
-import com.cupid.joalarm.school.SchoolRepository;
+import com.cupid.joalarm.school.entity.School;
+import com.cupid.joalarm.school.repository.SchoolRepository;
 import com.sun.jdi.request.DuplicateRequestException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -99,5 +99,11 @@ public class AccountService {
         String schoolName = school.getName();
 
         return schoolName;
+    }
+
+    @Transactional(readOnly = true)
+    public Account findAccountBySeq(Long seq){
+        return accountRepository.findAccountByAccountSeq(seq)
+                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 account"));
     }
 }

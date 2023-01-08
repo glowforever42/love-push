@@ -4,8 +4,12 @@
  * @modified Hyeonsooryu | 마크업 구조 리팩터링 & 애니메이션 추가
  */
 
+<<<<<<< HEAD
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+=======
+import { useCallback, useContext, useEffect, useState } from 'react';
+>>>>>>> 438ee2bfbd4e25f19175537b33dfb9baa227bbd1
 import ReactGA from 'react-ga';
 import styled from 'styled-components';
 
@@ -19,6 +23,7 @@ import useDocumentTitle from '../hooks/useDocumentTitle';
 
 import '../styles/Home.style.css';
 import { heartSendSetAPI } from '../api/heartAPI';
+import { ClientContext } from '../store/clientContext';
 
 const MainPage = () => {
   useDocumentTitle('좋아하면 누르는');
@@ -28,6 +33,10 @@ const MainPage = () => {
   const [isNameInputOpen, setIsNameInputOpen] = useState(false);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const { activateClient } = useContext(ClientContext);
+  useEffect(() => {
+    activateClient()
+  }, [])
   const [showModal, setShowModal] = useState(false);
 
   const toggleModal = useCallback((status: boolean) => {
